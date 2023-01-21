@@ -1,1 +1,1 @@
-web: java -Dserver.port=$PORT -jar target/create-your-own-ebook-api-0.0.1-SNAPSHOT.jar
+web: java -Dserver.port=$PORT -Dopenai.token=${OPENAI_TOKEN} -jar target/create-your-own-ebook-api-0.0.1-SNAPSHOT.jar
