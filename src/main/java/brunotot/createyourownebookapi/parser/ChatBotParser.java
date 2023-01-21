@@ -4,6 +4,7 @@ import brunotot.createyourownebookapi.domain.PDFStructure;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class ChatBotParser {
@@ -16,7 +17,7 @@ public final class ChatBotParser {
                 .of(pdfStructureString.split("\n"))
                 .map(String::strip)
                 .filter(s -> !s.isBlank())
-                .toList();
+                .collect(Collectors.toList());
         var pdfStructure = PDFStructure.build(bookTitle);
         PDFStructure headingStructure = null;
         boolean lastMainHeading = false;
