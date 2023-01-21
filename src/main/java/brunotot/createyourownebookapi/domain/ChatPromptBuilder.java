@@ -5,6 +5,10 @@ public final class ChatPromptBuilder {
         // NOOP
     }
 
+    public static String buildLanguagePrompt(final String language) {
+        return String.format("Please answer in %s language.", language);
+    }
+
     public static String buildChapterContentPrompt(final String bookTitle, final String chapterTitle) {
         return String.format("For an ebook called \"%s\" write a chapter for \"%s\" but leave out the chapter title",
                 bookTitle,

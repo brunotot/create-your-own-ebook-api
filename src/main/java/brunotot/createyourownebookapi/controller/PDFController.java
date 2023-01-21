@@ -1,5 +1,6 @@
 package brunotot.createyourownebookapi.controller;
 
+import brunotot.createyourownebookapi.domain.constants.AppProps;
 import brunotot.createyourownebookapi.itext.service.PDFService;
 import brunotot.createyourownebookapi.openai.service.ChatBotService;
 import org.springframework.core.io.InputStreamResource;
@@ -25,10 +26,11 @@ public class PDFController {
     @GetMapping("/ebook")
     public ResponseEntity<InputStreamResource> downloadPDF(
             final @RequestParam String title,
-            final @RequestParam(required = false) String additionalInfo
+            final @RequestParam(required = false) String additionalInfo,
+            final @RequestParam(required = false, defaultValue = AppProps.DEFAULT_CHAT_LANG) String language
     ) throws Exception {
-        var pdfStructure = this.chatBotService.getPDFStructure(title, additionalInfo);
-        var pdfSection = this.chatBotService.getPDFSection(pdfStructure);
+        var pdfStructure = this.chatBotService.getPDFStructure(title, additionalInfo, language);
+        var pdfSection = this.chatBotService.getPDFSection(pdfStructure, language);
         var isr = this.pdfService.createPDF(pdfSection);
         return this.buildPDFResponseEntity(isr);
     }

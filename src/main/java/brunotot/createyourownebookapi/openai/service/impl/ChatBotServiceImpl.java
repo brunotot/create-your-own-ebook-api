@@ -3,6 +3,7 @@ package brunotot.createyourownebookapi.openai.service.impl;
 import brunotot.createyourownebookapi.domain.ChatPromptBuilder;
 import brunotot.createyourownebookapi.domain.PDFSection;
 import brunotot.createyourownebookapi.domain.PDFStructure;
+import brunotot.createyourownebookapi.domain.constants.AppProps;
 import brunotot.createyourownebookapi.openai.service.ChatBotService;
 import brunotot.createyourownebookapi.parser.ChatBotParser;
 import com.theokanning.openai.OpenAiService;
@@ -52,18 +53,20 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     @Override
     public PDFStructure getPDFStructure(final String pdfTitle) {
-        return this.getPDFStructure(pdfTitle, "");
+        return this.getPDFStructure(pdfTitle, "", AppProps.DEFAULT_CHAT_LANG);
     }
 
     @Override
-    public PDFStructure getPDFStructure(final String bookTitle, final String additionalInfo) {
-        var prompt = ChatPromptBuilder.buildBookOutlinePrompt(bookTitle);
+    public PDFStructure getPDFStructure(final String bookTitle, final String additionalInfo, final String language) {
+        var prompt = ChatPromptBuilder.buildBookOutlinePrompt(bookTitle)
+                + "." + additionalInfo
+                + "." + ChatPromptBuilder.buildLanguagePrompt(language);
         var response = this.ask(prompt + additionalInfo);
         return ChatBotParser.parsePDFStructure(bookTitle, response);
     }
 
     @Override
-    public PDFSection getPDFSection(final PDFStructure pdfStructure) {
+    public PDFSection getPDFSection(final PDFStructure pdfStructure, final String language) {
         PDFSection skeleton = pdfStructure.getAsPDFSection();
         final var bookTitle = pdfStructure.getTitle();
         final var recursiveLength = skeleton.getRecursiveLength();
@@ -71,7 +74,8 @@ public class ChatBotServiceImpl implements ChatBotService {
         AtomicInteger ordinal = new AtomicInteger(1);
         skeleton.forEach((section) -> {
             var chapterTitle = section.getTitle();
-            var prompt = ChatPromptBuilder.buildChapterContentPrompt(bookTitle, chapterTitle);
+            var prompt = ChatPromptBuilder.buildChapterContentPrompt(bookTitle, chapterTitle)
+                    + "." + ChatPromptBuilder.buildLanguagePrompt(language);
             StopWatch watch = new StopWatch();
             watch.start();
             var content = this.ask(prompt);
@@ -106,7 +110,9 @@ public class ChatBotServiceImpl implements ChatBotService {
         try {
             return this.openAiService.createCompletion(request);
         } catch (final HttpException httpException) {
-            if (HttpStatus.SERVICE_UNAVAILABLE.value() == httpException.code() || retryCount > OPENAI_TIMEOUT_RETRIES) {
+            if (HttpStatus.TOO_MANY_REQUESTS.value() == httpException.code()
+                    || HttpStatus.SERVICE_UNAVAILABLE.value() == httpException.code()
+                    || retryCount > OPENAI_TIMEOUT_RETRIES) {
                 try {
                     log.warn(buildServiceUnavailableLogMessage(retryCount));
                     Thread.sleep(OPENAI_SLEEP_TIMEOUT_MS);
